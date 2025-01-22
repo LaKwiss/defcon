@@ -1,114 +1,71 @@
-import 'package:defcon/city.dart';
-import 'package:equatable/equatable.dart';
+import 'dart:math' as math;
+
+import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 
-class Hex extends Equatable {
-  final String id;
-  final int q;
-  final int r;
-  final int s;
-  final String type;
-  final List<String> connections;
-  final City? city;
+class HexTile extends PositionComponent {
+  final int row;
+  final int col;
+  bool isSelected = false;
+  late Paint _paint;
+  late Path _hexPath;
 
-  const Hex(
-    this.city, {
-    required this.id,
-    required this.q,
-    required this.r,
-    required this.s,
-    required this.type,
-    required this.connections,
-  });
+  HexTile({
+    required Vector2 position,
+    required Vector2 size,
+    required this.row,
+    required this.col,
+  }) : super(position: position, size: size) {
+    _paint = Paint()
+      ..style = PaintingStyle.fill
+      ..color = Colors.blue.withOpacity(0.5);
 
-  factory Hex.fromJson(Map<String, dynamic> json) {
-    return Hex(
-      json['city'] != null ? City.fromJson(json['city']) : null,
-      id: json['id'],
-      q: json['q'],
-      r: json['r'],
-      s: json['s'],
-      type: json['type'],
-      connections: List<String>.from(json['connections']),
-    );
+    _hexPath = _createHexPath();
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'q': q,
-      'r': r,
-      's': s,
-      'type': type,
-      'connections': connections,
-      'city': city?.toJson(),
-    };
-  }
-
-  @override
-  List<Object?> get props => [id, q, r, s, type, connections, city];
-
-  Widget toWidget(double size) {
-    return SizedBox(
-      width: size,
-      height: size,
-      child: CustomPaint(
-        painter: _HexPainter(
-          color: Colors.blue,
-          strokeColor: Colors.black54,
-          strokeWidth: 1.0,
-        ),
-        child: city != null
-            ? Center(
-                child: Icon(
-                  Icons.location_city,
-                  color: Colors.white,
-                  size: size * 0.5,
-                ),
-              )
-            : null,
-      ),
-    );
-  }
-}
-
-class _HexPainter extends CustomPainter {
-  final Color color;
-  final Color strokeColor;
-  final double strokeWidth;
-
-  _HexPainter({
-    required this.color,
-    required this.strokeColor,
-    required this.strokeWidth,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
+  Path _createHexPath() {
     final path = Path();
-    final w = size.width;
-    final h = size.height;
+    final double radius = size.x / 2;
+    final double centerX = radius;
+    final double centerY = radius;
 
-    path.moveTo(w * 0.25, 0);
-    path.lineTo(w * 0.75, 0);
-    path.lineTo(w, h * 0.5);
-    path.lineTo(w * 0.75, h);
-    path.lineTo(w * 0.25, h);
-    path.lineTo(0, h * 0.5);
+    for (int i = 0; i < 6; i++) {
+      final double angle = i * math.pi / 3;
+      final double x = centerX + radius * math.cos(angle);
+      final double y = centerY + radius * math.sin(angle);
+
+      if (i == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
+    }
     path.close();
-
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
-    canvas.drawPath(path, paint);
-
-    paint
-      ..color = strokeColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth;
-    canvas.drawPath(path, paint);
+    return path;
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  void render(Canvas canvas) {
+    _paint.color =
+        isSelected ? Colors.red.withOpacity(0.7) : Colors.blue.withOpacity(0.5);
+    canvas.drawPath(_hexPath, _paint);
+
+    // Dessiner la bordure
+    canvas.drawPath(
+      _hexPath,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..color = Colors.black
+        ..strokeWidth = 2.0,
+    );
+  }
+
+  void toggleSelection() {
+    isSelected = !isSelected;
+  }
+
+  bool containsPoint(Vector2 point) {
+    final localPoint = point - position;
+    return _hexPath.contains(Offset(localPoint.x, localPoint.y));
+  }
 }
