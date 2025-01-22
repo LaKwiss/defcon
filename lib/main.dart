@@ -11,7 +11,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hex = Hex(
-      null, // pas de ville
+      null,
       id: '1',
       q: 0,
       r: 0,
@@ -25,7 +25,17 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: hex.toWidget(20),
+      home: Center(
+        child: InteractiveViewer(
+          child: SizedBox(
+            height: 200,
+            width: 200,
+            child: Stack(
+              children: [hex.toWidget(20)],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

@@ -51,7 +51,7 @@ class Hex extends Equatable {
   Widget toWidget(double size) {
     return SizedBox(
       width: size,
-      height: size * 0.866,
+      height: size,
       child: CustomPaint(
         painter: _HexPainter(
           color: Colors.blue,
